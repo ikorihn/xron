@@ -13,6 +13,9 @@ func main() {
     <book ID="extension1" available="yes">
         <title>Book Title 1</title>
         <price>100 - 200</price>
+        <note name="mynote">
+            <author>Author 1</author>
+        </note>
     </book>
     <book ID="Book001" available="no">
         <title>Book Title 2</title>
@@ -48,8 +51,8 @@ func main() {
 	// 	fmt.Printf("#%d %s\n", i, n.InnerText())
 	// }
 
-	for i, n := range xmlquery.Find(doc, "/") {
-		children(n)
+	for _, n := range xmlquery.Find(doc, "/") {
+		children(n, "")
 		// child := n.FirstChild
 		// ns := child.NextSibling
 		// for ns != nil {
@@ -61,33 +64,43 @@ func main() {
 	}
 }
 
-func children(node *xmlquery.Node) {
+func children(node *xmlquery.Node, parent string) {
 	fc := node.FirstChild
 	if fc == nil {
-		// fmt.Printf("deepest attr: %v, text: %v, type: %s\n", node.Attr, node.Data, nodeTypeString(node.Type))
+		if strings.TrimSpace(node.InnerText()) != "" {
+			fmt.Printf("%s = '%s'\n", parent, node.InnerText())
+		}
 		return
 	}
 
 	pathstr := node.Data
 	for _, a := range node.Attr {
-		pathstr += fmt.Sprintf(`[@%s='%s']`, a.Name.Local, a.Value)
-
+		pathstr += fmt.Sprintf(`[@%s="%s"]`, a.Name.Local, a.Value)
 	}
 	// fmt.Printf("child attr: %v, text: %v, type: %s, %d\n", node.Attr, node.Data, nodeTypeString(node.Type), node.Type)
-	fmt.Printf("%s\n", pathstr)
+	if parent == "/" {
+		parent = ""
+	}
+	current := fmt.Sprintf("%s/%s", parent, pathstr)
+	fmt.Printf("%s\n", current)
 
-	nextSibling(fc)
-	children(fc)
+	nextSibling(fc, current)
+	children(fc, current)
 }
-func nextSibling(node *xmlquery.Node) {
+func nextSibling(node *xmlquery.Node, parent string) {
 	ns := node.NextSibling
 	if ns == nil {
 		// fmt.Printf("finalSibling attr: %v, text: %v, type: %s\n", node.Attr, node.Data, nodeTypeString(node.Type))
-		children(node)
+		if node.FirstChild != nil {
+			children(node, parent)
+		}
 		return
 	}
-	children(ns)
-	nextSibling(ns)
+
+	if ns.FirstChild != nil {
+		children(ns, parent)
+	}
+	nextSibling(ns, parent)
 }
 
 func nodeTypeString(n xmlquery.NodeType) string {
