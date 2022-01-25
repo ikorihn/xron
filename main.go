@@ -16,6 +16,7 @@ func main() {
         <note name="mynote">
             <author>Author 1</author>
         </note>
+        <category name="novel" id="2" />
     </book>
     <book ID="Book001" available="no">
         <title>Book Title 2</title>
@@ -67,8 +68,16 @@ func main() {
 func children(node *xmlquery.Node, parent string) {
 	fc := node.FirstChild
 	if fc == nil {
+		if len(node.Attr) > 0 {
+			pathstr := node.Data
+			for _, a := range node.Attr {
+				pathstr += fmt.Sprintf(`[@%s="%s"]`, a.Name.Local, a.Value)
+			}
+			current := fmt.Sprintf("%s/%s", parent, pathstr)
+			fmt.Printf("%s\n", current)
+		}
 		if strings.TrimSpace(node.InnerText()) != "" {
-			fmt.Printf("%s = '%s'\n", parent, node.InnerText())
+			fmt.Printf("%s/text() = '%s'\n", parent, node.InnerText())
 		}
 		return
 	}
@@ -84,22 +93,16 @@ func children(node *xmlquery.Node, parent string) {
 	current := fmt.Sprintf("%s/%s", parent, pathstr)
 	fmt.Printf("%s\n", current)
 
-	nextSibling(fc, current)
 	children(fc, current)
+	nextSibling(fc, current)
 }
 func nextSibling(node *xmlquery.Node, parent string) {
 	ns := node.NextSibling
 	if ns == nil {
-		// fmt.Printf("finalSibling attr: %v, text: %v, type: %s\n", node.Attr, node.Data, nodeTypeString(node.Type))
-		if node.FirstChild != nil {
-			children(node, parent)
-		}
 		return
 	}
 
-	if ns.FirstChild != nil {
-		children(ns, parent)
-	}
+	children(ns, parent)
 	nextSibling(ns, parent)
 }
 
