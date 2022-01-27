@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/antchfx/xmlquery"
@@ -14,9 +15,10 @@ func main() {
         <title>Book Title 1</title>
         <price>100 - 200</price>
         <note name="mynote">
-            <author>Author 1</author>
+            <author id="20">Author 1</author>
         </note>
         <category name="novel" id="2" />
+        <empty />
     </book>
     <book ID="Book001" available="no">
         <title>Book Title 2</title>
@@ -37,73 +39,57 @@ func main() {
 </books>
 `
 
-	doc, err := xmlquery.Parse(strings.NewReader(s))
+	convertXmlToXpath(strings.NewReader(s))
+}
+
+func convertXmlToXpath(r io.Reader) {
+	doc, err := xmlquery.Parse(r)
 	if err != nil {
 		panic(err)
 	}
-	// channel := xmlquery.FindOne(doc, "//channel")
-	// if n := channel.SelectElement("title"); n != nil {
-	// 	fmt.Printf("title: %s\n", n.InnerText())
-	// }
-	// if n := channel.SelectElement("link"); n != nil {
-	// 	fmt.Printf("link: %s\n", n.InnerText())
-	// }
-	// for i, n := range xmlquery.Find(doc, "//item/title") {
-	// 	fmt.Printf("#%d %s\n", i, n.InnerText())
-	// }
 
 	for _, n := range xmlquery.Find(doc, "/") {
-		children(n, "")
-		// child := n.FirstChild
-		// ns := child.NextSibling
-		// for ns != nil {
-		// 	if child.NextSibling != nil {
-		// 		fmt.Printf("attr: %v, text: %v, type: %s\n", ns.Attr, ns.Data, nodeTypeString(ns.Type))
-		// 	}
-		// 	ns = ns.NextSibling
-		// }
+		traverseChildElement(n, "")
 	}
 }
 
-func children(node *xmlquery.Node, parent string) {
+func traverseChildElement(node *xmlquery.Node, parent string) {
 	fc := node.FirstChild
 	if fc == nil {
-		if len(node.Attr) > 0 {
-			pathstr := node.Data
-			for _, a := range node.Attr {
-				pathstr += fmt.Sprintf(`[@%s="%s"]`, a.Name.Local, a.Value)
-			}
-			current := fmt.Sprintf("%s/%s", parent, pathstr)
-			fmt.Printf("%s\n", current)
-		}
-		if strings.TrimSpace(node.InnerText()) != "" {
+		if node.Type == xmlquery.ElementNode {
+			fmt.Printf("%s/%s\n", parent, formatAttr(node))
+		} else if strings.TrimSpace(node.InnerText()) != "" {
 			fmt.Printf("%s/text() = '%s'\n", parent, node.InnerText())
 		}
 		return
 	}
 
-	pathstr := node.Data
-	for _, a := range node.Attr {
-		pathstr += fmt.Sprintf(`[@%s="%s"]`, a.Name.Local, a.Value)
-	}
-	// fmt.Printf("child attr: %v, text: %v, type: %s, %d\n", node.Attr, node.Data, nodeTypeString(node.Type), node.Type)
 	if parent == "/" {
 		parent = ""
 	}
-	current := fmt.Sprintf("%s/%s", parent, pathstr)
+	current := fmt.Sprintf("%s/%s", parent, formatAttr(node))
 	fmt.Printf("%s\n", current)
 
-	children(fc, current)
-	nextSibling(fc, current)
+	traverseChildElement(fc, current)
+	traverseNextSibling(fc, current)
 }
-func nextSibling(node *xmlquery.Node, parent string) {
+
+func traverseNextSibling(node *xmlquery.Node, parent string) {
 	ns := node.NextSibling
 	if ns == nil {
 		return
 	}
 
-	children(ns, parent)
-	nextSibling(ns, parent)
+	traverseChildElement(ns, parent)
+	traverseNextSibling(ns, parent)
+}
+
+func formatAttr(node *xmlquery.Node) string {
+	s := node.Data
+	for _, a := range node.Attr {
+		s += fmt.Sprintf(`[@%s="%s"]`, a.Name.Local, a.Value)
+	}
+	return s
 }
 
 func nodeTypeString(n xmlquery.NodeType) string {
