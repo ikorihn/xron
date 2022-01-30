@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ikorihn/xron"
@@ -37,5 +38,8 @@ func main() {
 </books>
 `
 
-	xron.ConvertXmlToXpath(strings.NewReader(s))
+	xpaths := xron.ConvertXmlToXpath(strings.NewReader(s))
+	for _, v := range xpaths {
+		fmt.Println(v)
+	}
 }

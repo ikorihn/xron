@@ -8,24 +8,28 @@ import (
 	"github.com/antchfx/xmlquery"
 )
 
-func ConvertXmlToXpath(r io.Reader) {
+func ConvertXmlToXpath(r io.Reader) []string {
 	doc, err := xmlquery.Parse(r)
 	if err != nil {
 		panic(err)
 	}
 
+	xpaths := make([]string, 0)
 	for _, n := range xmlquery.Find(doc, "/") {
-		traverseChildElement(n, "")
+		traverseChildElement(n, "", &xpaths)
 	}
+	return xpaths
 }
 
-func traverseChildElement(node *xmlquery.Node, parent string) {
+func traverseChildElement(node *xmlquery.Node, parent string, xpaths *[]string) {
 	fc := node.FirstChild
 	if fc == nil {
 		if node.Type == xmlquery.ElementNode {
-			fmt.Printf("%s/%s\n", parent, formatAttr(node))
+			current := fmt.Sprintf("%s/%s", parent, formatAttr(node))
+			*xpaths = append(*xpaths, current)
 		} else if strings.TrimSpace(node.InnerText()) != "" {
-			fmt.Printf("%s/text() = '%s'\n", parent, node.InnerText())
+			current := fmt.Sprintf("%s/text() = '%s'", parent, node.InnerText())
+			*xpaths = append(*xpaths, current)
 		}
 		return
 	}
@@ -34,20 +38,20 @@ func traverseChildElement(node *xmlquery.Node, parent string) {
 		parent = ""
 	}
 	current := fmt.Sprintf("%s/%s", parent, formatAttr(node))
-	fmt.Printf("%s\n", current)
+	*xpaths = append(*xpaths, current)
 
-	traverseChildElement(fc, current)
-	traverseNextSibling(fc, current)
+	traverseChildElement(fc, current, xpaths)
+	traverseNextSibling(fc, current, xpaths)
 }
 
-func traverseNextSibling(node *xmlquery.Node, parent string) {
+func traverseNextSibling(node *xmlquery.Node, parent string, xpaths *[]string) {
 	ns := node.NextSibling
 	if ns == nil {
 		return
 	}
 
-	traverseChildElement(ns, parent)
-	traverseNextSibling(ns, parent)
+	traverseChildElement(ns, parent, xpaths)
+	traverseNextSibling(ns, parent, xpaths)
 }
 
 func formatAttr(node *xmlquery.Node) string {
