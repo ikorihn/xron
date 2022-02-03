@@ -15,12 +15,15 @@ func main() {
 	var xmlFilePath string
 
 	app := &cli.App{
+		Name:  "xron",
+		Usage: "Transform XML file into xpath, break down line by line",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "file",
 				Usage:       "xml file to parse",
 				Aliases:     []string{"f"},
 				Destination: &xmlFilePath,
+				Required:    true,
 			},
 		},
 		Action: func(c *cli.Context) error {
