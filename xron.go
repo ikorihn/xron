@@ -24,6 +24,9 @@ func ConvertXmlToXpath(r io.Reader) []string {
 func traverseChildElement(node *xmlquery.Node, parent string, xpaths *[]string) {
 	fc := node.FirstChild
 	if fc == nil {
+		if parent == "/" {
+			parent = ""
+		}
 		if node.Type == xmlquery.ElementNode {
 			current := fmt.Sprintf("%s/%s", parent, formatAttr(node))
 			*xpaths = append(*xpaths, current)
