@@ -2,6 +2,8 @@
 
 Transform XML into xpath and make it greppable.
 
+Like [gron](https://github.com/tomnomnom/gron), xron prints every xml element as xpath style line by line.
+
 ## Usage
 
 ```bash
@@ -33,4 +35,10 @@ $ xron -f books.xml
 /books/book[@ID="extension2"]/title/text() = 'Book Title 2'
 /books/book[@ID="extension2"]/price
 /books/book[@ID="extension2"]/price/text() = '500'
+```
+
+## Install
+
+```bash
+$ go install github.com/ikorihn/xron@latest
 ```
