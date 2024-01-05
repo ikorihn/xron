@@ -40,5 +40,5 @@ $ xron < books.xml
 ## Install
 
 ```bash
-$ go install github.com/akavel/xron/cmd/xron@latest
+$ go install github.com/ikorihn/xron/cmd/xron@latest
 ```

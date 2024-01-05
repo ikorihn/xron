@@ -1,4 +1,4 @@
-module github.com/akavel/xron
+module github.com/ikorihn/xron
 
 go 1.17
 

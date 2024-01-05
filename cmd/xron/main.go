@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/akavel/xron"
+	"github.com/ikorihn/xron"
 )
 
 func main() {
