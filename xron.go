@@ -34,7 +34,7 @@ func ConvertXmlToXpath(r io.Reader) (rows []string) {
 		case xml.EndElement:
 			stack = stack[:len(stack)-1]
 		case xml.CharData:
-			text := strings.TrimSpace(string(t))
+			text := trimSpace(t)
 			if len(text) == 0 {
 				continue
 			}
@@ -51,6 +51,23 @@ func ConvertXmlToXpath(r io.Reader) (rows []string) {
 			// ignore
 		}
 	}
+}
+
+func trimSpace(c xml.CharData) string {
+	const cutset = " \n"
+	s := strings.TrimLeft(string(c), cutset)
+	if len(s) != len(c) {
+		s = " " + s
+	}
+	n := len(s)
+	s = strings.TrimRight(s, cutset)
+	if len(s) != n {
+		s = s + " "
+	}
+	if s == " " {
+		return ""
+	}
+	return s
 }
 
 /*
