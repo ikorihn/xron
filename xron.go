@@ -1,13 +1,59 @@
 package xron
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/antchfx/xmlquery"
 )
 
+func ConvertXmlToXpath(r io.Reader) (rows []string) {
+	d := xml.NewDecoder(r)
+	stack := []string{}
+	// TODO[LATER]: instead, have emitRow passed as arg
+	emitRow := func(row string) {
+		rows = append(rows, row)
+	}
+	// FIXME: should only happen if really has any root, probably?
+	emitRow("/")
+	for {
+		t, err := d.Token()
+		if err == io.EOF {
+			return
+		} else if err != nil {
+			panic(err) // TODO[LATER]: allow returning errors
+		}
+		switch t := t.(type) {
+		case xml.StartElement:
+			attrs := []string{}
+			for _, a := range t.Attr {
+				attrs = append(attrs, fmt.Sprintf(`[@%s=%q]`, a.Name.Local, a.Value))
+			}
+			stack = append(stack, t.Name.Local+strings.Join(attrs, ""))
+			emitRow("/" + strings.Join(stack, "/"))
+		case xml.EndElement:
+			stack = stack[:len(stack)-1]
+		case xml.CharData:
+			text := strings.TrimSpace(string(t))
+			if len(text) == 0 {
+				continue
+			}
+			// TODO: verify if consecutive CDATA are merged
+			text = fmt.Sprintf("%q", text)
+			// TODO: modify tests to not mandate single quotes
+			text = fmt.Sprintf("/text() = '%s'", text[1:len(text)-1])
+			prefix := ""
+			if len(stack) > 0 {
+				prefix = "/" + strings.Join(stack, "/")
+			}
+			emitRow(prefix + text)
+		case xml.ProcInst, xml.Directive, xml.Comment:
+			// ignore
+		}
+	}
+}
+
+/*
 func ConvertXmlToXpath(r io.Reader) []string {
 	doc, err := xmlquery.Parse(r)
 	if err != nil {
@@ -84,3 +130,4 @@ func nodeTypeString(n xmlquery.NodeType) string {
 	}
 	return ""
 }
+*/
