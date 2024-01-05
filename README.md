@@ -21,7 +21,7 @@ $ cat books.xml
   </book>
 </books>
 
-$ xron -f books.xml
+$ xron < books.xml
 /
 /books
 /books/book[@ID="extension1"][@available="yes"]
@@ -40,5 +40,5 @@ $ xron -f books.xml
 ## Install
 
 ```bash
-$ go install github.com/ikorihn/xron@latest
+$ go install github.com/akavel/xron@latest
 ```

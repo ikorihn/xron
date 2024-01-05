@@ -12,7 +12,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, `USAGE:
 	xron < file.xml
 
-Translates XML input to a greppable, simplified XPath-like format.
+Translates XML input to a greppable, simplified XPath-like line-by-line format.
 `)
 		os.Exit(1)
 	}
