@@ -32,7 +32,7 @@ func TestConvertXmlToXpath(t *testing.T) {
                           <category name="novel" id="2" />
                       </book>
                       <book ID="extension2" available="no">
-                          <title>Book Title 2</title>
+                          <title>Book <![CDATA[Title]]> 2</title>
                           <price>2300</price>
                           <category name="fiction" id="10" />
                       </book>

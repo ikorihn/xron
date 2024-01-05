@@ -9,7 +9,10 @@ import (
 
 func ConvertXmlToXpath(r io.Reader) (rows []string) {
 	d := xml.NewDecoder(r)
+	// stack of names of surrounding XML elements
 	stack := []string{}
+	// inText is non-empty when merging consecutive text/CDATA
+	inText := []string{}
 	// TODO[LATER]: instead, have emitRow passed as arg
 	emitRow := func(row string) {
 		rows = append(rows, row)
@@ -18,11 +21,34 @@ func ConvertXmlToXpath(r io.Reader) (rows []string) {
 	emitRow("/")
 	for {
 		t, err := d.Token()
+		// Note: err handling is further down
+
+		if len(inText) != 0 {
+			shouldEmit := true
+			switch t.(type) {
+			case xml.ProcInst, xml.Directive, xml.Comment,
+				xml.CharData:
+				shouldEmit = false
+			}
+			if shouldEmit {
+				text := strings.Join(inText, "")
+				// TODO: modify tests to not mandate single quotes
+				text = fmt.Sprintf("/text() = '%s'", text)
+				prefix := ""
+				if len(stack) > 0 {
+					prefix = "/" + strings.Join(stack, "/")
+				}
+				emitRow(prefix + text)
+				inText = nil
+			}
+		}
+
 		if err == io.EOF {
 			return
 		} else if err != nil {
 			panic(err) // TODO[LATER]: allow returning errors
 		}
+
 		switch t := t.(type) {
 		case xml.StartElement:
 			attrs := []string{}
@@ -36,17 +62,12 @@ func ConvertXmlToXpath(r io.Reader) (rows []string) {
 		case xml.CharData:
 			text := trimSpace(t)
 			if len(text) == 0 {
+				// FIXME[LATER]: handle properly if inText
 				continue
 			}
-			// TODO: verify if consecutive CDATA are merged
 			text = fmt.Sprintf("%q", text)
-			// TODO: modify tests to not mandate single quotes
-			text = fmt.Sprintf("/text() = '%s'", text[1:len(text)-1])
-			prefix := ""
-			if len(stack) > 0 {
-				prefix = "/" + strings.Join(stack, "/")
-			}
-			emitRow(prefix + text)
+			text = text[1 : len(text)-1]
+			inText = append(inText, text)
 		case xml.ProcInst, xml.Directive, xml.Comment:
 			// ignore
 		}
