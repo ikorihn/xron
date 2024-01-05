@@ -8,15 +8,18 @@ import (
 )
 
 func ConvertXmlToXpath(r io.Reader) (rows []string) {
+	ConvertXmlToXpathFunc(r, func(row string) {
+		rows = append(rows, row)
+	})
+	return
+}
+
+func ConvertXmlToXpathFunc(r io.Reader, emitRow func(string)) {
 	d := xml.NewDecoder(r)
 	// stack of names of surrounding XML elements
 	stack := []string{}
 	// inText is non-empty when merging consecutive text/CDATA
 	inText := []string{}
-	// TODO[LATER]: instead, have emitRow passed as arg
-	emitRow := func(row string) {
-		rows = append(rows, row)
-	}
 	// FIXME: should only happen if really has any root, probably?
 	emitRow("/")
 	for {
