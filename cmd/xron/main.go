@@ -1,50 +1,23 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/ikorihn/xron"
-	"github.com/urfave/cli/v2"
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		fmt.Fprintf(os.Stderr, `USAGE:
+	xron < file.xml
 
-	var xmlFilePath string
-
-	app := &cli.App{
-		Name:  "xron",
-		Usage: "Transform XML file into xpath, break down line by line",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "file",
-				Usage:       "xml file to parse",
-				Aliases:     []string{"f"},
-				Destination: &xmlFilePath,
-				Required:    true,
-			},
-		},
-		Action: func(c *cli.Context) error {
-			if len(xmlFilePath) == 0 {
-				return errors.New("please specify file")
-			}
-			f, err := os.Open(xmlFilePath)
-			if err != nil {
-				return err
-			}
-			xpaths := xron.ConvertXmlToXpath(f)
-			for _, v := range xpaths {
-				fmt.Println(v)
-			}
-			return nil
-		},
+Translates XML input to a greppable, simplified XPath-like line-by-line format.
+`)
+		os.Exit(1)
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	xron.ConvertXmlToXpathFunc(os.Stdin, func(row string) {
+		fmt.Println(row)
+	})
 }
